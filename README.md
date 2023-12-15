@@ -1,11 +1,11 @@
 # Google protobuf-lite for Android NDK
 
-This builds a static library to use protobuf-lite with C++ on Android.
+This repository builds a static protobuf-lite library for Android.
 Based on protobuf-3.6.1 as used in Ubuntu 20.04.
 
 ## Update protobuf
 
-- Download the required [protobuf version](https://github.com/protocolbuffers/protobuf/releases).
+- Download the required [protobuf](https://github.com/protocolbuffers/protobuf/releases) version.
 - Copy the `protobuf-x.x.x/src/google` folder to `jni/src`.
 - Open `jni/Android.mk` and update list of files to build
   according to `protobuf-x.x.x/cmake/libprotobuf-lite.cmake`.
