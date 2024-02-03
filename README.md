@@ -1,7 +1,7 @@
 # Google protobuf-lite for Android NDK
 
 This repository builds a static protobuf-lite library for Android.
-Based on protobuf-3.6.1 as used in Ubuntu 20.04.
+Based on protobuf-3.12.4 as used in Ubuntu 22.04.
 
 ## Update protobuf
 

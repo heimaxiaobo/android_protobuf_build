@@ -28,26 +28,55 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/* This code will be inserted into generated code for
- * google/protobuf/timestamp.proto. */
+#ifndef GOOGLE_PROTOBUF_TEST_UTIL2_H__
+#define GOOGLE_PROTOBUF_TEST_UTIL2_H__
 
-/**
- * Returns a JavaScript 'Date' object corresponding to this Timestamp.
- * @return {!Date}
- */
-proto.google.protobuf.Timestamp.prototype.toDate = function() {
-  var seconds = this.getSeconds();
-  var nanos = this.getNanos();
+#include <google/protobuf/stubs/strutil.h>
 
-  return new Date((seconds * 1000) + (nanos / 1000000));
-};
+#include <google/protobuf/util/message_differencer.h>
+#include <google/protobuf/testing/googletest.h>
 
+namespace google {
+namespace protobuf {
+namespace TestUtil {
 
-/**
- * Sets the value of this Timestamp object to be the given Date.
- * @param {!Date} value The value to set.
- */
-proto.google.protobuf.Timestamp.prototype.fromDate = function(value) {
-  this.setSeconds(Math.floor(value.getTime() / 1000));
-  this.setNanos(value.getMilliseconds() * 1000000);
-};
+// Translate net/proto2/* -> google/protobuf/*
+inline std::string TranslatePathToOpensource(const std::string& google3_path) {
+  const std::string prefix = "net/proto2/";
+  GOOGLE_CHECK(google3_path.find(prefix) == 0) << google3_path;
+  std::string path = google3_path.substr(prefix.size());
+
+  path = StringReplace(path, "internal/", "", false);
+  path = StringReplace(path, "proto/", "", false);
+  path = StringReplace(path, "public/", "", false);
+  return "google/protobuf/" + path;
+}
+
+inline std::string MaybeTranslatePath(const std::string& google3_path) {
+  std::string path = google3_path;
+  path = TranslatePathToOpensource(path);
+  return path;
+}
+
+inline std::string TestSourceDir() {
+  return google::protobuf::TestSourceDir();
+}
+
+inline std::string GetTestDataPath(const std::string& google3_path) {
+  return TestSourceDir() + "/" + MaybeTranslatePath(google3_path);
+}
+
+// Checks the equality of "message" and serialized proto of type "ProtoType".
+// Do not directly compare two serialized protos.
+template <typename ProtoType>
+bool EqualsToSerialized(const ProtoType& message, const std::string& data) {
+  ProtoType other;
+  other.ParsePartialFromString(data);
+  return util::MessageDifferencer::Equals(message, other);
+}
+
+}  // namespace TestUtil
+}  // namespace protobuf
+}  // namespace google
+
+#endif  // GOOGLE_PROTOBUF_TEST_UTIL2_H__
