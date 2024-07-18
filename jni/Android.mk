@@ -3,7 +3,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE    := libprotobuf-lite
 
-LOCAL_SRC_FILES :=\
+LOCAL_SRC_FILES := \
 	src/google/protobuf/any_lite.cc \
 	src/google/protobuf/arena.cc \
 	src/google/protobuf/arenaz_sampler.cc \
