@@ -33,6 +33,4 @@ jobs:
         with:
           name: libprotobuf-lite
           path: |
-            obj/local/armeabi-v7a/
-            obj/local/arm64-v8a/
-            obj/local/include/
+            obj/
