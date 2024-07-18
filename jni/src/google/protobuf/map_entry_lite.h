@@ -37,19 +37,20 @@
 #include <string>
 #include <utility>
 
-#include <google/protobuf/stubs/casts.h>
-#include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/arena.h>
-#include <google/protobuf/port.h>
-#include <google/protobuf/arenastring.h>
-#include <google/protobuf/generated_message_util.h>
-#include <google/protobuf/map.h>
-#include <google/protobuf/map_type_handler.h>
-#include <google/protobuf/parse_context.h>
-#include <google/protobuf/wire_format_lite.h>
+#include "google/protobuf/arena.h"
+#include "absl/base/casts.h"
+#include "google/protobuf/arenastring.h"
+#include "google/protobuf/generated_message_util.h"
+#include "google/protobuf/io/coded_stream.h"
+#include "google/protobuf/map.h"
+#include "google/protobuf/map_type_handler.h"
+#include "google/protobuf/parse_context.h"
+#include "google/protobuf/port.h"
+#include "google/protobuf/wire_format_lite.h"
 
 // Must be included last.
-#include <google/protobuf/port_def.inc>
+#include "google/protobuf/port_def.inc"
+
 #ifdef SWIG
 #error "You cannot SWIG proto headers"
 #endif
@@ -102,7 +103,7 @@ struct MoveHelper<false, false, true, T> {  // strings and similar
 };
 
 // MapEntryImpl is used to implement parsing and serialization of map entries.
-// It uses Curious Recursive Template Pattern (CRTP) to provide the type of
+// It uses Curiously Recurring Template Pattern (CRTP) to provide the type of
 // the eventual code to the template code.
 template <typename Derived, typename Base, typename Key, typename Value,
           WireFormatLite::FieldType kKeyFieldType,
@@ -159,6 +160,9 @@ class MapEntryImpl : public Base {
         value_(ValueTypeHandler::Constinit()),
         _has_bits_{} {}
 
+  MapEntryImpl(const MapEntryImpl&) = delete;
+  MapEntryImpl& operator=(const MapEntryImpl&) = delete;
+
   ~MapEntryImpl() override {
     if (Base::GetArenaForAllocation() != nullptr) return;
     KeyTypeHandler::DeleteNoArena(key_);
@@ -167,10 +171,10 @@ class MapEntryImpl : public Base {
 
   // accessors ======================================================
 
-  virtual inline const KeyMapEntryAccessorType& key() const {
+  inline const KeyMapEntryAccessorType& key() const {
     return KeyTypeHandler::GetExternalReference(key_);
   }
-  virtual inline const ValueMapEntryAccessorType& value() const {
+  inline const ValueMapEntryAccessorType& value() const {
     return ValueTypeHandler::DefaultIfNotInitialized(value_);
   }
   inline KeyMapEntryAccessorType* mutable_key() {
@@ -420,17 +424,19 @@ class MapEntryImpl : public Base {
   uint32_t _has_bits_[1];
 
  private:
-  friend class ::PROTOBUF_NAMESPACE_ID::Arena;
+  friend class google::protobuf::Arena;
   typedef void InternalArenaConstructable_;
   typedef void DestructorSkippable_;
   template <typename C, typename K, typename V, WireFormatLite::FieldType,
             WireFormatLite::FieldType>
-  friend class internal::MapEntry;
+  friend class google::protobuf::internal::MapEntry;
   template <typename C, typename K, typename V, WireFormatLite::FieldType,
             WireFormatLite::FieldType>
-  friend class internal::MapFieldLite;
+  friend class google::protobuf::internal::MapFieldLite;
 
-  GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(MapEntryImpl);
+  template <typename DerivedT, typename KeyT, typename TT,
+            WireFormatLite::FieldType, WireFormatLite::FieldType>
+  friend class google::protobuf::internal::MapField;
 };
 
 template <typename T, typename Key, typename Value,
@@ -443,14 +449,13 @@ class MapEntryLite : public MapEntryImpl<T, MessageLite, Key, Value,
                        kValueFieldType>
       SuperType;
   constexpr MapEntryLite() {}
+  MapEntryLite(const MapEntryLite&) = delete;
+  MapEntryLite& operator=(const MapEntryLite&) = delete;
   explicit MapEntryLite(Arena* arena) : SuperType(arena) {}
   ~MapEntryLite() override {
     MessageLite::_internal_metadata_.template Delete<std::string>();
   }
   void MergeFrom(const MapEntryLite& other) { MergeFromInternal(other); }
-
- private:
-  GOOGLE_DISALLOW_EVIL_CONSTRUCTORS(MapEntryLite);
 };
 
 // Helpers for deterministic serialization =============================
@@ -467,6 +472,15 @@ struct MapSorterIt {
   MapSorterIt operator+(int v) { return MapSorterIt{ptr + v}; }
 };
 
+// Defined outside of MapSorterFlat to only be templatized on the key.
+template <typename KeyT>
+struct MapSorterLessThan {
+  using storage_type = std::pair<KeyT, const void*>;
+  bool operator()(const storage_type& a, const storage_type& b) const {
+    return a.first < b.first;
+  }
+};
+
 // MapSorterFlat stores keys inline with pointers to map entries, so that
 // keys can be compared without indirection. This type is used for maps with
 // keys that are not strings.
@@ -474,7 +488,10 @@ template <typename MapT>
 class MapSorterFlat {
  public:
   using value_type = typename MapT::value_type;
-  using storage_type = std::pair<typename MapT::key_type, const value_type*>;
+  // To avoid code bloat we don't put `value_type` in `storage_type`. It is not
+  // necessary for the call to sort, and avoiding it prevents unnecessary
+  // separate instantiations of sort.
+  using storage_type = std::pair<typename MapT::key_type, const void*>;
 
   // This const_iterator dereferenes to the map entry stored in the sorting
   // array pairs. This is the same interface as the Map::const_iterator type,
@@ -486,7 +503,9 @@ class MapSorterFlat {
     using reference = const typename MapT::value_type&;
     using MapSorterIt<storage_type>::MapSorterIt;
 
-    pointer operator->() const { return this->ptr->second; }
+    pointer operator->() const {
+      return static_cast<const value_type*>(this->ptr->second);
+    }
     reference operator*() const { return *this->operator->(); }
   };
 
@@ -498,9 +517,7 @@ class MapSorterFlat {
       *it++ = {entry.first, &entry};
     }
     std::sort(&items_[0], &items_[size_],
-              [](const storage_type& a, const storage_type& b) {
-                return a.first < b.first;
-              });
+              MapSorterLessThan<typename MapT::key_type>{});
   }
   size_t size() const { return size_; }
   const_iterator begin() const { return {items_.get()}; }
@@ -511,13 +528,27 @@ class MapSorterFlat {
   std::unique_ptr<storage_type[]> items_;
 };
 
+// Defined outside of MapSorterPtr to only be templatized on the key.
+template <typename KeyT>
+struct MapSorterPtrLessThan {
+  bool operator()(const void* a, const void* b) const {
+    // The pointers point to the `std::pair<const Key, Value>` object.
+    // We cast directly to the key to read it.
+    return *reinterpret_cast<const KeyT*>(a) <
+           *reinterpret_cast<const KeyT*>(b);
+  }
+};
+
 // MapSorterPtr stores and sorts pointers to map entries. This type is used for
 // maps with keys that are strings.
 template <typename MapT>
 class MapSorterPtr {
  public:
   using value_type = typename MapT::value_type;
-  using storage_type = const typename MapT::value_type*;
+  // To avoid code bloat we don't put `value_type` in `storage_type`. It is not
+  // necessary for the call to sort, and avoiding it prevents unnecessary
+  // separate instantiations of sort.
+  using storage_type = const void*;
 
   // This const_iterator dereferenes the map entry pointer stored in the sorting
   // array. This is the same interface as the Map::const_iterator type, and
@@ -529,7 +560,9 @@ class MapSorterPtr {
     using reference = const typename MapT::value_type&;
     using MapSorterIt<storage_type>::MapSorterIt;
 
-    pointer operator->() const { return *this->ptr; }
+    pointer operator->() const {
+      return static_cast<const value_type*>(*this->ptr);
+    }
     reference operator*() const { return *this->operator->(); }
   };
 
@@ -540,10 +573,10 @@ class MapSorterPtr {
     for (const auto& entry : m) {
       *it++ = &entry;
     }
+    static_assert(PROTOBUF_FIELD_OFFSET(typename MapT::value_type, first) == 0,
+                  "Must hold for MapSorterPtrLessThan to work.");
     std::sort(&items_[0], &items_[size_],
-              [](const storage_type& a, const storage_type& b) {
-                return a->first < b->first;
-              });
+              MapSorterPtrLessThan<typename MapT::key_type>{});
   }
   size_t size() const { return size_; }
   const_iterator begin() const { return {items_.get()}; }
@@ -558,6 +591,6 @@ class MapSorterPtr {
 }  // namespace protobuf
 }  // namespace google
 
-#include <google/protobuf/port_undef.inc>
+#include "google/protobuf/port_undef.inc"
 
 #endif  // GOOGLE_PROTOBUF_MAP_ENTRY_LITE_H__

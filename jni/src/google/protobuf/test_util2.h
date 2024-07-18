@@ -31,41 +31,26 @@
 #ifndef GOOGLE_PROTOBUF_TEST_UTIL2_H__
 #define GOOGLE_PROTOBUF_TEST_UTIL2_H__
 
-#include <google/protobuf/stubs/strutil.h>
+#include <string>
 
-#include <google/protobuf/util/message_differencer.h>
-#include <google/protobuf/testing/googletest.h>
-#include <google/protobuf/io/zero_copy_stream.h>
-#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
+#include "google/protobuf/testing/googletest.h"
+#include "absl/strings/str_cat.h"
+#include "absl/strings/string_view.h"
+#include "absl/strings/strip.h"
+#include "google/protobuf/io/zero_copy_stream.h"
+#include "google/protobuf/io/zero_copy_stream_impl_lite.h"
+#include "google/protobuf/util/message_differencer.h"
 
 namespace google {
 namespace protobuf {
 namespace TestUtil {
 
-// Translate net/proto2/* -> google/protobuf/*
-inline std::string TranslatePathToOpensource(const std::string& google3_path) {
-  const std::string prefix = "net/proto2/";
-  GOOGLE_CHECK(google3_path.find(prefix) == 0) << google3_path;
-  std::string path = google3_path.substr(prefix.size());
-
-  path = StringReplace(path, "internal/", "", false);
-  path = StringReplace(path, "proto/", "", false);
-  path = StringReplace(path, "public/", "", false);
-  return "google/protobuf/" + path;
-}
-
-inline std::string MaybeTranslatePath(const std::string& google3_path) {
-  std::string path = google3_path;
-  path = TranslatePathToOpensource(path);
-  return path;
-}
-
 inline std::string TestSourceDir() {
   return google::protobuf::TestSourceDir();
 }
 
-inline std::string GetTestDataPath(const std::string& google3_path) {
-  return TestSourceDir() + "/" + MaybeTranslatePath(google3_path);
+inline std::string GetTestDataPath(absl::string_view path) {
+  return absl::StrCat(TestSourceDir(), "/", path);
 }
 
 // Checks the equality of "message" and serialized proto of type "ProtoType".
@@ -87,7 +72,7 @@ class BoundedArrayInputStream : public io::ZeroCopyInputStream {
   ~BoundedArrayInputStream() override {}
 
   bool Next(const void** data, int* size) override {
-    GOOGLE_CHECK_LT(stream_.ByteCount(), bound_);
+    ABSL_CHECK_LT(stream_.ByteCount(), bound_);
     return stream_.Next(data, size);
   }
   void BackUp(int count) override { stream_.BackUp(count); }

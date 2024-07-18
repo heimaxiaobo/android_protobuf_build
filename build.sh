@@ -4,107 +4,52 @@ $ANDROID_NDK_ROOT/ndk-build -j5 $@
 SRC_DIR=jni/src/google/protobuf
 DST_DIR=obj/local/include/google/protobuf
 HEADERS='any.h
-any.pb.h
-api.pb.h
-arena.h
-arenastring.h
-arena_impl.h
-compiler/code_generator.h
-compiler/command_line_interface.h
-compiler/importer.h
-compiler/parser.h
-compiler/plugin.h
-compiler/plugin.pb.h
-descriptor.h
-descriptor.pb.h
-descriptor_database.h
-duration.pb.h
-dynamic_message.h
-empty.pb.h
-extension_set.h
-extension_set_inl.h
-field_mask.pb.h
-generated_enum_reflection.h
-generated_enum_util.h
-generated_message_reflection.h
-generated_message_util.h
-has_bits.h
-implicit_weak_message.h
-inlined_string_field.h
-io/coded_stream.h
-io/gzip_stream.h
-io/io_win32.h
-io/printer.h
-io/strtod.h
-io/tokenizer.h
-io/zero_copy_stream.h
-io/zero_copy_stream_impl.h
-io/zero_copy_stream_impl_lite.h
-map.h
-map_entry.h
-map_entry_lite.h
-map_field.h
-map_field_inl.h
-map_field_lite.h
-map_type_handler.h
-message.h
-message_lite.h
-metadata.h
-metadata_lite.h
-parse_context.h
-port.h
-port_def.inc
-port_undef.inc
-reflection.h
-reflection_ops.h
-repeated_field.h
-service.h
-source_context.pb.h
-struct.pb.h
-stubs/bytestream.h
-stubs/callback.h
-stubs/casts.h
-stubs/common.h
-stubs/hash.h
-stubs/logging.h
-stubs/macros.h
-stubs/map_util.h
-stubs/mutex.h
-stubs/once.h
-stubs/platform_macros.h
-stubs/port.h
-stubs/status.h
-stubs/stl_util.h
-stubs/stringpiece.h
-stubs/strutil.h
-stubs/template_util.h
-text_format.h
-timestamp.pb.h
-type.pb.h
-unknown_field_set.h
-util/delimited_message_util.h
-util/field_comparator.h
-util/field_mask_util.h
-util/json_util.h
-util/message_differencer.h
-util/time_util.h
-util/type_resolver.h
-util/type_resolver_util.h
-wire_format.h
-wire_format_lite.h
-wrappers.pb.h
-any.proto
-api.proto
-compiler/plugin.proto
-descriptor.proto
-duration.proto
-empty.proto
-field_mask.proto
-source_context.proto
-struct.proto
-timestamp.proto
-type.proto
-wrappers.proto'
+  arena.h
+  arena_align.h
+  arena_allocation_policy.h
+  arena_cleanup.h
+  arenastring.h
+  arenaz_sampler.h
+  endian.h
+  explicitly_constructed.h
+  extension_set.h
+  extension_set_inl.h
+  generated_enum_util.h
+  generated_message_tctable_decl.h
+  generated_message_tctable_impl.h
+  generated_message_util.h
+  has_bits.h
+  implicit_weak_message.h
+  inlined_string_field.h
+  internal_visibility.h
+  io/coded_stream.h
+  io/io_win32.h
+  io/zero_copy_stream.h
+  io/zero_copy_stream_impl.h
+  io/zero_copy_stream_impl_lite.h
+  map.h
+  map_entry_lite.h
+  map_field_lite.h
+  map_type_handler.h
+  message_lite.h
+  metadata_lite.h
+  parse_context.h
+  port.h
+  port_def.inc
+  port_undef.inc
+  raw_ptr.h
+  repeated_field.h
+  repeated_ptr_field.h
+  serial_arena.h
+  string_block.h
+  stubs/callback.h
+  stubs/common.h
+  stubs/platform_macros.h
+  stubs/port.h
+  stubs/status_macros.h
+  thread_safe_arena.h
+  varint_shuffle.h
+  wire_format_lite.h'
 
 mkdir -p $DST_DIR $DST_DIR/compiler $DST_DIR/io $DST_DIR/stubs $DST_DIR/util
 

@@ -28,10 +28,20 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include <google/protobuf/map_proto2_unittest.pb.h>
-#include <google/protobuf/map_unittest.pb.h>
-#include <google/protobuf/reflection_tester.h>
-#include <google/protobuf/test_util2.h>
+#include <array>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+#include "absl/container/flat_hash_set.h"
+#include "google/protobuf/arena_test_util.h"
+#include "google/protobuf/internal_visibility_for_testing.h"
+#include "google/protobuf/map_proto2_unittest.pb.h"
+#include "google/protobuf/map_unittest.pb.h"
+#include "google/protobuf/reflection_tester.h"
+#include "google/protobuf/unittest.pb.h"
+#include "google/protobuf/unittest_import.pb.h"
 
 
 #define BRIDGE_UNITTEST ::google::protobuf::bridge_unittest
@@ -41,19 +51,17 @@
 
 // Must include after defining UNITTEST, etc.
 // clang-format off
-#include <google/protobuf/test_util.inc>
-#include <google/protobuf/map_test_util.inc>
-#include <google/protobuf/map_test.inc>
+#include "google/protobuf/test_util.inc"
+#include "google/protobuf/map_test_util.inc"
+#include "google/protobuf/map_test.inc"
 // clang-format on
 
 // Must be included last.
-#include <google/protobuf/port_def.inc>
+#include "google/protobuf/port_def.inc"
 
 namespace google {
 namespace protobuf {
 namespace internal {
-namespace {
-
 
 struct AlignedAsDefault {
   int x;
@@ -61,6 +69,119 @@ struct AlignedAsDefault {
 struct alignas(8) AlignedAs8 {
   int x;
 };
+
+template <>
+struct is_internal_map_value_type<AlignedAsDefault> : std::true_type {};
+template <>
+struct is_internal_map_value_type<AlignedAs8> : std::true_type {};
+
+namespace {
+
+using ::testing::FieldsAre;
+using ::testing::UnorderedElementsAre;
+
+
+TEST(MapTest, CopyConstructIntegers) {
+  auto token = internal::InternalVisibilityForTesting{};
+  using MapType = Map<int32_t, int32_t>;
+  MapType original;
+  original[1] = 2;
+  original[2] = 3;
+
+  MapType map1(original);
+  ASSERT_EQ(map1.size(), 2);
+  EXPECT_EQ(map1[1], 2);
+  EXPECT_EQ(map1[2], 3);
+
+  MapType map2(token, nullptr, original);
+  ASSERT_EQ(map2.size(), 2);
+  EXPECT_EQ(map2[1], 2);
+  EXPECT_EQ(map2[2], 3);
+}
+
+TEST(MapTest, CopyConstructStrings) {
+  auto token = internal::InternalVisibilityForTesting{};
+  using MapType = Map<std::string, std::string>;
+  MapType original;
+  original["1"] = "2";
+  original["2"] = "3";
+
+  MapType map1(original);
+  ASSERT_EQ(map1.size(), 2);
+  EXPECT_EQ(map1["1"], "2");
+  EXPECT_EQ(map1["2"], "3");
+
+  MapType map2(token, nullptr, original);
+  ASSERT_EQ(map2.size(), 2);
+  EXPECT_EQ(map2["1"], "2");
+  EXPECT_EQ(map2["2"], "3");
+}
+
+TEST(MapTest, CopyConstructMessages) {
+  auto token = internal::InternalVisibilityForTesting{};
+  using MapType = Map<std::string, TestAllTypes>;
+  MapType original;
+  original["1"].set_optional_int32(1);
+  original["2"].set_optional_int32(2);
+
+  MapType map1(original);
+  ASSERT_EQ(map1.size(), 2);
+  EXPECT_EQ(map1["1"].optional_int32(), 1);
+  EXPECT_EQ(map1["2"].optional_int32(), 2);
+
+  MapType map2(token, nullptr, original);
+  ASSERT_EQ(map2.size(), 2);
+  EXPECT_EQ(map2["1"].optional_int32(), 1);
+  EXPECT_EQ(map2["2"].optional_int32(), 2);
+}
+
+TEST(MapTest, CopyConstructIntegersWithArena) {
+  auto token = internal::InternalVisibilityForTesting{};
+  using MapType = Map<int32_t, int32_t>;
+  MapType original;
+  original[1] = 2;
+  original[2] = 3;
+
+  Arena arena;
+  alignas(MapType) char mem1[sizeof(MapType)];
+  MapType& map1 = *new (mem1) MapType(token, &arena, original);
+  ASSERT_EQ(map1.size(), 2);
+  EXPECT_EQ(map1[1], 2);
+  EXPECT_EQ(map1[2], 3);
+  EXPECT_EQ(map1[2], 3);
+}
+
+TEST(MapTest, CopyConstructStringsWithArena) {
+  auto token = internal::InternalVisibilityForTesting{};
+  using MapType = Map<std::string, std::string>;
+  MapType original;
+  original["1"] = "2";
+  original["2"] = "3";
+
+  Arena arena;
+  alignas(MapType) char mem1[sizeof(MapType)];
+  MapType& map1 = *new (mem1) MapType(token, &arena, original);
+  ASSERT_EQ(map1.size(), 2);
+  EXPECT_EQ(map1["1"], "2");
+  EXPECT_EQ(map1["2"], "3");
+}
+
+TEST(MapTest, CopyConstructMessagesWithArena) {
+  auto token = internal::InternalVisibilityForTesting{};
+  using MapType = Map<std::string, TestAllTypes>;
+  MapType original;
+  original["1"].set_optional_int32(1);
+  original["2"].set_optional_int32(2);
+
+  Arena arena;
+  alignas(MapType) char mem1[sizeof(MapType)];
+  MapType& map1 = *new (mem1) MapType(token, &arena, original);
+  ASSERT_EQ(map1.size(), 2);
+  EXPECT_EQ(map1["1"].optional_int32(), 1);
+  EXPECT_EQ(map1["1"].GetArena(), &arena);
+  EXPECT_EQ(map1["2"].optional_int32(), 2);
+  EXPECT_EQ(map1["2"].GetArena(), &arena);
+}
 
 template <typename Aligned, bool on_arena = false>
 void MapTest_Aligned() {
@@ -80,7 +201,10 @@ TEST(MapTest, Aligned8) { MapTest_Aligned<AlignedAs8>(); }
 TEST(MapTest, Aligned8OnArena) { MapTest_Aligned<AlignedAs8, true>(); }
 
 
+
 }  // namespace
 }  // namespace internal
 }  // namespace protobuf
 }  // namespace google
+
+#include "google/protobuf/port_undef.inc"

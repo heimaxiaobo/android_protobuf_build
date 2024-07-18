@@ -31,9 +31,10 @@
 #ifndef GOOGLE_PROTOBUF_REFLECTION_INTERNAL_H__
 #define GOOGLE_PROTOBUF_REFLECTION_INTERNAL_H__
 
-#include <google/protobuf/map_field.h>
-#include <google/protobuf/reflection.h>
-#include <google/protobuf/repeated_field.h>
+#include "absl/strings/cord.h"
+#include "google/protobuf/map_field.h"
+#include "google/protobuf/reflection.h"
+#include "google/protobuf/repeated_field.h"
 
 namespace google {
 namespace protobuf {
@@ -109,6 +110,9 @@ class RepeatedFieldWrapper : public RandomAccessRepeatedFieldAccessor {
   void RemoveLast(Field* data) const override {
     MutableRepeatedField(data)->RemoveLast();
   }
+  void Reserve(Field* data, int size) const override {
+    MutableRepeatedField(data)->Reserve(size);
+  }
   void SwapElements(Field* data, int index1, int index2) const override {
     MutableRepeatedField(data)->SwapElements(index1, index2);
   }
@@ -164,6 +168,9 @@ class RepeatedPtrFieldWrapper : public RandomAccessRepeatedFieldAccessor {
   }
   void RemoveLast(Field* data) const override {
     MutableRepeatedField(data)->RemoveLast();
+  }
+  void Reserve(Field* data, int size) const override {
+    MutableRepeatedField(data)->Reserve(size);
   }
   void SwapElements(Field* data, int index1, int index2) const override {
     MutableRepeatedField(data)->SwapElements(index1, index2);
@@ -228,12 +235,15 @@ class MapFieldAccessor final : public RandomAccessRepeatedFieldAccessor {
   void RemoveLast(Field* data) const override {
     MutableRepeatedField(data)->RemoveLast();
   }
+  void Reserve(Field* data, int size) const override {
+    MutableRepeatedField(data)->Reserve(size);
+  }
   void SwapElements(Field* data, int index1, int index2) const override {
     MutableRepeatedField(data)->SwapElements(index1, index2);
   }
   void Swap(Field* data, const internal::RepeatedFieldAccessor* other_mutator,
             Field* other_data) const override {
-    GOOGLE_CHECK(this == other_mutator);
+    ABSL_CHECK(this == other_mutator);
     MutableRepeatedField(data)->Swap(MutableRepeatedField(other_data));
   }
 
@@ -277,7 +287,7 @@ class RepeatedFieldPrimitiveAccessor final : public RepeatedFieldWrapper<T> {
     // Currently RepeatedFieldPrimitiveAccessor is the only implementation of
     // RepeatedFieldAccessor for primitive types. As we are using singletons
     // for these accessors, here "other_mutator" must be "this".
-    GOOGLE_CHECK(this == other_mutator);
+    ABSL_CHECK(this == other_mutator);
     MutableRepeatedField(data)->Swap(MutableRepeatedField(other_data));
   }
 
@@ -341,7 +351,7 @@ class RepeatedPtrFieldMessageAccessor final
   RepeatedPtrFieldMessageAccessor() {}
   void Swap(Field* data, const internal::RepeatedFieldAccessor* other_mutator,
             Field* other_data) const override {
-    GOOGLE_CHECK(this == other_mutator);
+    ABSL_CHECK(this == other_mutator);
     MutableRepeatedField(data)->Swap(MutableRepeatedField(other_data));
   }
 
