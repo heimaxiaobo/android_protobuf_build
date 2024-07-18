@@ -9,7 +9,6 @@ api.pb.h
 arena.h
 arena_impl.h
 arenastring.h
-arenaz_sampler.h
 compiler/code_generator.h
 compiler/command_line_interface.h
 compiler/cpp/cpp_file.h
