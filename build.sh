@@ -14,14 +14,12 @@ compiler/command_line_interface.h
 compiler/cpp/cpp_file.h
 compiler/cpp/cpp_generator.h
 compiler/cpp/cpp_helpers.h
-compiler/cpp/cpp_names.h
 compiler/csharp/csharp_doc_comment.h
 compiler/csharp/csharp_generator.h
 compiler/csharp/csharp_names.h
 compiler/csharp/csharp_options.h
 compiler/importer.h
 compiler/java/java_generator.h
-compiler/java/java_kotlin_generator.h
 compiler/java/java_names.h
 compiler/js/js_generator.h
 compiler/objectivec/objectivec_generator.h
