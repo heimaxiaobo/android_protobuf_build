@@ -6,7 +6,6 @@ LOCAL_MODULE    := libprotobuf-lite
 LOCAL_SRC_FILES :=\
 	src/google/protobuf/any_lite.cc \
 	src/google/protobuf/arena.cc \
-	src/google/protobuf/arenastring.cc \
 	src/google/protobuf/arenaz_sampler.cc \
 	src/google/protobuf/extension_set.cc \
 	src/google/protobuf/generated_enum_util.cc \
