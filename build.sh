@@ -8,7 +8,6 @@ any.pb.h
 api.pb.h
 arena.h
 arena_impl.h
-arenastring.h
 compiler/code_generator.h
 compiler/command_line_interface.h
 compiler/importer.h
