@@ -7,6 +7,7 @@ HEADERS='any.h
 any.pb.h
 api.pb.h
 arena.h
+arenastring.h
 arena_impl.h
 compiler/code_generator.h
 compiler/command_line_interface.h
